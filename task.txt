@@ -1,0 +1,151 @@
+Homework: Melody Timer App (Fixed & Generative Rhythm)
+ 
+What you’ll build
+A console app that:
+Stores a melody (sequence of notes, e.g., ["A","C","E","G"] or emojis like ["🎵","🔔","🎶"]).
+Plays the melody using timers:
+Mode 1 – Fixed Tempo: steady interval (e.g., every 500 ms).
+Mode 2 – Generative Tempo: variable delay (e.g., random 300–900 ms) for a “jazz” feel.
+Supports pause/stop logic (e.g., after X notes or on a condition).
+(Optional) Associates each note with a HEX color or mood word in the log.
+(Stretch) Uses a simple beep per note with Web Audio API.
+
+
+
+Step-by-Step
+Step 0 — Project init
+Create a new file: melodyTimer.js.
+Add a single console.log("Melody Timer App started") to verify it runs.
+Step 1 — Represent the melody
+Declare an array to hold notes in order. Example shapes:
+Letters: ["A","C","E","G"]
+Emojis: ["🎵","🔔","🎶","🎵"]
+Objects (advanced): [{note:"A", duration:500}, {note:"C", duration:300}, ...]
+Decision: fixed duration per note or per-note duration (advanced).
+✅ Checkpoint: console.log the array to confirm content and order.
+
+Step 2 — Mode switch
+Create a variable mode that can be "fixed"or "random".
+You’ll use if/else later to change timing behavior based on mode.
+✅ Checkpoint: console.log("Mode:", mode)prints correctly.
+
+Step 3 — Fixed tempo player (Mode 1)
+Use a repeating timer to step through the melody in order.
+Hint: a counter/index starts at 0 and advances each tick.
+Hint: wrap back to 0 using modulo.
+On each tick: print current note (and optional mood/color).
+Pseudocode
+// interval = choose a steady delay in ms (e.g., 500) start repeating timer with interval: print melody[index] index = (index + 1) modulo melody.length // optional: stop after N loops
+
+✅ Checkpoint: You see a steady stream of notes in correct order.
+
+Step 4 — Generative tempo player (Mode 2)
+Use a one-shot timer that reschedules itself with a new delay each time.
+Hint: calculate nextDelay using Math.random() in a range, e.g., 300–900 ms.
+Hint: pick note either sequentially or randomly.
+Pseudocode
+function playNext() { // choose a note (sequential or random) print chosen note // compute nextDelay: min + Math.random() * (max - min) schedule playNext to run again after nextDelay } // kick off once playNext()
+
+✅ Checkpoint: Notes appear at uneven intervals (not uniform).
+
+Step 5 — Pause / stop conditions
+Pick at least one:
+Stop after N notes (keep a counter).
+Stop after T seconds (store start time, compare elapsed).
+Stop when a random event happens (e.g., 5% chance to end).
+Pseudocode
+if (shouldStop) { cancel repeating timer OR skip scheduling the next one print "Stopped" }
+
+✅ Checkpoint: The app ends predictably per your rule.
+
+Step 6 — Optional mood/color mapping
+Create a helper that returns a HEX color or a mood word for the note.
+Print: Now playing: NOTE | Color: #RRGGBB | Mood: calm
+Hints
+Map table (object): { A: "#88E9FF", C: "#FF33A1", ... }
+Or generate HEX using a 6-char loop with digits 0–F.
+Step 7 — Optional beep (Web Audio API)
+Create an AudioContext.
+For each note:
+Create an oscillator, set frequency (A = 440 Hz is a classic).
+Start, then stop after ~0.2 s.
+Important: Browsers may require a user action to start audio; keep this optional.
+Pseudocode
+// on play: create oscillator set waveform and frequency connect to destination start stop after short duration
+
+✅ Checkpoint: If allowed by your browser, you hear beeps per note.
+
+
+Self-test scenarios
+Fixed tempo sanity check
+Set interval to 500 ms.
+Expect steady, ordered output.
+Random tempo variation
+Range 300–900 ms.
+Expect irregular gaps; no two runs identical.
+Stop after N
+Count notes; app stops exactly at N.
+Print a final summary line.
+Mode switch
+Toggle mode value.
+Verify both behaviors without editing other code.
+
+Reflection (submit as 3–5 sentences)
+Answer briefly:
+How did timing change the feel of your melody?
+What’s one edge case you found and fixed?
+If this were a real product, what user controlwould you add (BPM slider, mode toggle, mute)?
+
+Melodies
+You can use your own note combinations or pick one of these recognizable sequences.
+
+Each example shows notes (letters) and optional emojis you can adapt.
+You still need to decide how to time and how to stop the melody.
+
+🎶 Option 1 — “Twinkle Twinkle Little Star”
+const melody = ["C", "C", "G", "G", "A", "A", "G", "F", "F", "E", "E", "D", "D", "C"];
+
+💡 Hint: Try 500 ms intervals for a steady children’s rhythm.
+
+🎶 Option 2 — “Happy Birthday”
+const melody = ["C", "C", "D", "C", "F", "E", "C", "C", "D", "C", "G", "F", "C", "C", "C5", "A", "F", "E", "D"];
+
+💡 Hint: This works well for experimenting with two different tempos — faster end section, slower start.
+
+🎶 Option 3 — “Beethoven’s Ode to Joy”
+const melody = ["E", "E", "F", "G", "G", "F", "E", "D", "C", "C", "D", "E", "E", "D", "D"];
+
+💡 Hint: You could try adding small random timing offsets (±100 ms) to make it feel like a human performance.
+
+🎶 Option 4 — “Lo-Fi Loop”
+const melody = ["A", "C", "E", "A", "D", "G", "C", "E"];
+
+💡 Hint: Perfect for experimenting with mood-based coloring or your “Calm Mode / Party Mode” logic.
+Maybe make “Calm” = blue/purple palette, “Party” = bright orange/pink palette.
+
+🎶 Option 5 — “Emoji Beats” (non-musical rhythm)
+const melody = ["🎵", "🎶", "🔔", "🎵", "💫", "🎵"];
+
+💡 Hint: Works great for randomized tempo and visual rhythm — feels like a tiny animation loop.
+
+What to submit
+melodyTimer.js
+A console screenshot showing:
+a run in fixed mode
+a run in random mode
+A short Reflection (text/markdown)
+Grading
+Melody structure (array + readable)
+Fixed tempo mode (correct sequencing)
+Random tempo mode (non-uniform delays)
+Stop/pause logic (works, not infinite)
+Clarity & reflection (clean logs, brief answers) 
++1 bonus: color/mood mapping
++1 bonus: beep per note (Web Audio)
+
+
+Hints (read if stuck)
+Random integer in range [min,max]:
+min + Math.floor(Math.random() * (max - min + 1))
+Non-uniform scheduling needs a recursivesetTimeout, not setInterval.
+To stop a repeating timer, you must store its idand call the clear function on it.
