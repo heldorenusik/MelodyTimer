@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melody Timer App</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 14px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .console {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #4ecdc4;
+            border-radius: 10px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .note-display {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .color-preview {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            vertical-align: middle;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Melody Timer App</h1>
+        
+        <div class="controls">
+            <button id="startFixed">Start Fixed Tempo</button>
+            <button id="startRandom">Start Random Tempo</button>
+            <button id="stop">Stop</button>
+            <button id="clear">Clear Console</button>
+        </div>
+        
+        <div class="note-display" id="currentNote">
+            Ready to play...
+        </div>
+        
+        <div class="console" id="console"></div>
+    </div>
+
+    <script>
+        console.log("Melody Timer App started");
+        const melody = ["C", "C", "G", "G", "A", "A", "G", "F", "F", "E", "E", "D", "D", "C"];
+        console.log("Melody:", melody);
+
+        // Step 2: Mode switch
+        let mode = "fixed"; // Can be "fixed" or "random"
+        console.log("Mode:", mode);
+
+        // Step 6: notes color/mood mapping
+        const noteColors = {
+            C: "#FF6B6B",
+            D: "#4ECDC4",
+            E: "#45B7D1",
+            F: "#96CEB4",
+            G: "#FFEAA7",
+            A: "#DDA0DD",
+            B: "#98D8C8"
+        };
+        const noteMoods = {
+            C: "energetic",
+            D: "calm",
+            E: "peaceful",
+            F: "cheerful",
+            G: "bright",
+            A: "dreamy",
+            B: "serene"
+        };
+
+        // Helper function to get note info
+        function getNoteInfo(note) {
+            return {
+                color: noteColors[note],
+                mood: noteMoods[note]
+            };
+        }
+
+        // Helper function to log playing note
+        function logPlayingNote(note) {
+            const noteInfo = getNoteInfo(note);
+            const message = `Now playing: ${note} | Color: ${noteInfo.color} | Mood: ${noteInfo.mood}`;
+            console.log(message);
+            log(message);
+            updateCurrentNote(note, noteInfo.color, noteInfo.mood);
+        }
+
+        let audioContext = null;
+        let currentTimer = null;
+        let isPlaying = false;
+
+        // Initialize audio context
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playNote(note) {
+            if (!audioContext) return;
+            
+            const frequencies = {
+                C: 261.63,
+                D: 293.66,
+                E: 329.63,
+                F: 349.23,
+                G: 392.00,
+                A: 440.00,
+                B: 493.88
+            };
+            
+            const frequency = frequencies[note] || 440;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+
+        function log(message) {
+            const consoleElement = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            consoleElement.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+        }
+
+        function updateCurrentNote(note, color, mood) {
+            const noteDisplay = document.getElementById('currentNote');
+            noteDisplay.innerHTML = `
+                <div style="color: ${color};">
+                    <span class="color-preview" style="background-color: ${color};"></span>
+                    ${note} | ${mood}
+                </div>
+            `;
+        }
+
+        function stopPlaying() {
+            if (currentTimer) {
+                clearInterval(currentTimer);
+                clearTimeout(currentTimer);
+                currentTimer = null;
+            }
+            isPlaying = false;
+            document.getElementById('currentNote').innerHTML = 'Stopped';
+            log('🎵 Playback stopped');
+        }
+
+        // Step 3: Fixed tempo player function
+        function playFixedTempo(interval) {
+            console.log("\n=== FIXED TEMPO MODE ===");
+            log("=== FIXED TEMPO MODE ===");
+            let noteIndex = 0; // current note index
+            let loopsCount = 0; // full melody played count
+            
+            const timer = setInterval(() => {
+                if (!isPlaying) {
+                    clearInterval(timer);
+                    return;
+                }
+                
+                // Log loop start
+                if (noteIndex === 0) {
+                    console.log(`🎶 start melody loop #${loopsCount + 1} 🎶.`);
+                    log(`🎶 start melody loop #${loopsCount + 1} 🎶.`);
+                }
+                
+                // Play current note
+                logPlayingNote(melody[noteIndex]);
+                playNote(melody[noteIndex]);
+                
+                // Move to next note
+                noteIndex = (noteIndex + 1) % melody.length;
+                
+                // Check if we completed a full loop
+                if (noteIndex === 0) {
+                    loopsCount++;
+                }
+            }, interval);
+            
+            return timer;
+        }
+
+        // Step 4: Generative tempo player function
+        function playGenerativeTempo(minDelay, maxDelay) {
+            console.log("\n=== GENERATIVE TEMPO MODE ===");
+            log("=== GENERATIVE TEMPO MODE ===");
+            let noteCount = 0; // total played notes count
+            let loopsCount = 0; // full melody played count
+            
+            function playNextNote() {
+                if (!isPlaying) {
+                    return;
+                }
+                
+                const noteIndex = noteCount % melody.length;
+                
+                // Log loop start
+                if (noteIndex === 0) {
+                    console.log(`🎶 start melody loop #${loopsCount + 1} 🎶.`);
+                    log(`🎶 start melody loop #${loopsCount + 1} 🎶.`);
+                }
+                
+                // Play current note
+                logPlayingNote(melody[noteIndex]);
+                playNote(melody[noteIndex]);
+                
+                noteCount++;
+                
+                // Check if we completed a full loop
+                if (noteIndex === melody.length - 1) {
+                    loopsCount++;
+                }
+                
+                // Calculate next delay
+                const nextDelay = minDelay + Math.random() * (maxDelay - minDelay);
+                // Schedule next note
+                currentTimer = setTimeout(playNextNote, nextDelay);
+            }
+            
+            // Start the generative sequence
+            playNextNote();
+        }
+
+        function startFixedTempo() {
+            if (isPlaying) stopPlaying();
+            
+            initAudio();
+            isPlaying = true;
+            
+            const interval = 500;
+            currentTimer = playFixedTempo(interval);
+        }
+
+        function startRandomTempo() {
+            if (isPlaying) stopPlaying();
+            
+            initAudio();
+            isPlaying = true;
+            
+            const minDelay = 300;
+            const maxDelay = 900;
+            playGenerativeTempo(minDelay, maxDelay);
+        }
+
+        // Event listeners
+        document.getElementById('startFixed').addEventListener('click', startFixedTempo);
+        document.getElementById('startRandom').addEventListener('click', startRandomTempo);
+        document.getElementById('stop').addEventListener('click', stopPlaying);
+        document.getElementById('clear').addEventListener('click', () => {
+            document.getElementById('console').innerHTML = '';
+        });
+
+        // Initial log
+        log('Melody Timer App started');
+        log(`Melody: ${melody.join(', ')}`);
+    </script>
+</body>
+</html>
