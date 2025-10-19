@@ -85,11 +85,33 @@
     <div class="container">
         <h1>🎵 Melody Timer App</h1>
         
-        <div class="controls">
-            <button id="startFixed">Start Fixed Tempo</button>
-            <button id="startRandom">Start Random Tempo</button>
-            <button id="stop">Stop</button>
-            <button id="clear">Clear Console</button>
+        <div class="controls" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <select id="melodySelect" style="padding: 12px 16px; border: none; border-radius: 25px; background: linear-gradient(45deg, #ff6b6b, #4ecdc4); color: white; font-weight: bold; cursor: pointer; font-size: 14px;">
+                <option value="twinkle" style="background: #333; color: white;">🎶 Twinkle Twinkle Little Star</option>
+                <option value="birthday" style="background: #333; color: white;">🎂 Happy Birthday</option>
+                <option value="ode" style="background: #333; color: white;">🎼 Beethoven's Ode to Joy</option>
+                <option value="lofi" style="background: #333; color: white;">🎧 Lo-Fi Loop</option>
+            </select>
+            <button id="startFixed" style="display: flex; align-items: center; gap: 8px;">▶️ Fixed</button>
+            <button id="startRandom" style="display: flex; align-items: center; gap: 8px;">▶️ Random</button>
+            <button id="stop">⏹️ Stop</button>
+            <button id="clear">🗑️ Clear</button>
+        </div>
+        
+        <div class="timing-controls" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label for="fixedInterval" style="color: white; font-weight: bold;">Fixed interval:</label>
+                <input type="number" id="fixedInterval" value="500" min="100" max="2000" step="50" 
+                       style="padding: 8px 12px; border: none; border-radius: 20px; background: rgba(255,255,255,0.9); color: #333; font-weight: bold; width: 80px; text-align: center;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label for="minDelay" style="color: white; font-weight: bold;">Random interval:</label>
+                <input type="number" id="minDelay" value="300" min="100" max="1000" step="50" 
+                       style="padding: 8px 12px; border: none; border-radius: 20px; background: rgba(255,255,255,0.9); color: #333; font-weight: bold; width: 80px; text-align: center;">
+                <span style="color: white; font-weight: bold;">-</span>
+                <input type="number" id="maxDelay" value="900" min="200" max="2000" step="50" 
+                       style="padding: 8px 12px; border: none; border-radius: 20px; background: rgba(255,255,255,0.9); color: #333; font-weight: bold; width: 80px; text-align: center;">
+            </div>
         </div>
         
         <div class="note-display" id="currentNote">
@@ -101,7 +123,17 @@
 
     <script>
         console.log("Melody Timer App started");
-        const melody = ["C", "C", "G", "G", "A", "A", "G", "F", "F", "E", "E", "D", "D", "C"];
+        
+        // Define all available melodies
+        const melodies = {
+            twinkle: ["C", "C", "G", "G", "A", "A", "G", "F", "F", "E", "E", "D", "D", "C"],
+            birthday: ["C", "C", "D", "C", "F", "E", "C", "C", "D", "C", "G", "F", "C", "C", "C5", "A", "F", "E", "D"],
+            ode: ["E", "E", "F", "G", "G", "F", "E", "D", "C", "C", "D", "E", "E", "D", "D"],
+            lofi: ["A", "C", "E", "A", "D", "G", "C", "E"]
+        };
+        
+        // Current melody (starts with Twinkle Twinkle)
+        let melody = melodies.twinkle;
         console.log("Melody:", melody);
 
         // Step 2: Mode switch
@@ -116,7 +148,8 @@
             F: "#96CEB4",
             G: "#FFEAA7",
             A: "#DDA0DD",
-            B: "#98D8C8"
+            B: "#98D8C8",
+            C5: "#FF6B6B" // Same as C but higher octave
         };
         const noteMoods = {
             C: "energetic",
@@ -125,7 +158,8 @@
             F: "cheerful",
             G: "bright",
             A: "dreamy",
-            B: "serene"
+            B: "serene",
+            C5: "energetic"
         };
 
         // Helper function to get note info
@@ -166,7 +200,8 @@
                 F: 349.23,
                 G: 392.00,
                 A: 440.00,
-                B: 493.88
+                B: 493.88,
+                C5: 523.25 // Higher octave C
             };
             
             const frequency = frequencies[note] || 440;
@@ -296,7 +331,8 @@
             initAudio();
             isPlaying = true;
             
-            const interval = 500;
+            const interval = parseInt(document.getElementById('fixedInterval').value);
+            log(`Starting fixed tempo with ${interval}ms interval`);
             currentTimer = playFixedTempo(interval);
         }
 
@@ -306,12 +342,30 @@
             initAudio();
             isPlaying = true;
             
-            const minDelay = 300;
-            const maxDelay = 900;
+            const minDelay = parseInt(document.getElementById('minDelay').value);
+            const maxDelay = parseInt(document.getElementById('maxDelay').value);
+            
+            // Validate that minDelay is less than maxDelay
+            if (minDelay >= maxDelay) {
+                log("Error: Min delay must be less than max delay");
+                isPlaying = false;
+                return;
+            }
+            
+            log(`Starting random tempo with ${minDelay}ms - ${maxDelay}ms range`);
             playGenerativeTempo(minDelay, maxDelay);
         }
 
+        // Function to change melody
+        function changeMelody() {
+            const selectedMelody = document.getElementById('melodySelect').value;
+            melody = melodies[selectedMelody];
+            console.log("Melody changed to:", melody);
+            log(`Melody changed to: ${melody.join(', ')}`);
+        }
+
         // Event listeners
+        document.getElementById('melodySelect').addEventListener('change', changeMelody);
         document.getElementById('startFixed').addEventListener('click', startFixedTempo);
         document.getElementById('startRandom').addEventListener('click', startRandomTempo);
         document.getElementById('stop').addEventListener('click', stopPlaying);
